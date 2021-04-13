@@ -1,2 +1,2 @@
-# openownership-json-to-ql-parser
+# openownership-parser
 Parser to import Open Ownership data in to SAP database
