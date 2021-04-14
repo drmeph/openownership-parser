@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# openownership-parser/parser.py
 
 from openownershiphandler.main import main
 

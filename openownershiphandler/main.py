@@ -1,7 +1,10 @@
 import sys
 import ijson
+import json
 
 from os import path
+from types import SimpleNamespace
+from .sqlFormatter import getInsert
 
 def main():
     print('Number of arguments:', len(sys.argv), 'arguments.')
@@ -18,4 +21,8 @@ def main():
         objects = ijson.items(f, 'item')
 
         for obj in objects:
-            print(obj)
+            sobj = json.dumps(obj)
+            jsonObj = json.loads(sobj, object_hook=lambda d: SimpleNamespace(**d))
+
+            print("--- New Record ---")
+            getInsert(jsonObj)
