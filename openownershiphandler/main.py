@@ -11,11 +11,19 @@ def main():
     print('Argument List:', str(sys.argv))
 
     inputFile = sys.argv[1]
-    print('File exists: '+ str(path.exists(inputFile)))
+    print('Input File exists: '+ str(path.exists(inputFile)))
+
+    outputFile = sys.argv[2]
+    print('Output File exists: '+ str(path.exists(outputFile)))
 
     """Read Json file"""
     if not path.exists(inputFile):
         sys.exit('File does not exist!')
+
+    if path.exists(outputFile):
+        sys.exit('Output file already exists, please use another name of delete the file.')
+
+    output = open(outputFile, "w+")
 
     with open(inputFile, 'r') as f:
         objects = ijson.items(f, 'item')
@@ -25,4 +33,7 @@ def main():
             jsonObj = json.loads(sobj, object_hook=lambda d: SimpleNamespace(**d))
 
             print("--- New Record ---")
-            getInsert(jsonObj)
+            inserts = getInsert(jsonObj)
+            output.write(inserts)
+
+    output.close()

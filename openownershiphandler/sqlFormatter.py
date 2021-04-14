@@ -2,7 +2,41 @@
 import sys
 
 
-class OwnershipOrControlStatement:
+class Statement:
+    def __init__(self):
+        pass
+
+    def getInsertRequest(self):
+        tableName = self.__class__.__name__
+        attrs = filter(lambda attr: not attr.startswith('__') and not attr.startswith('get'), dir(self))
+        attr_list = []
+        val_list = []
+        addr_list = []
+
+        for attr in attrs:
+            val = getattr(self, attr)
+
+            if type(val) is list:
+                addr_list = val
+            else:
+                attr_list.append(attr)
+                val_list.append("'"+val+"'")
+
+        #print("Attrs:", attr_list)
+        #print("Vals:", val_list)
+        req = f"INSERT INTO {tableName} ({','.join(attr_list)}) VALUES ({','.join(val_list)});"
+
+        if addr_list:
+            for addr in addr_list:
+                req += "\n" + addr.getInsertRequest()
+
+        if not isinstance(self, Address):
+            print(req)
+
+        return req
+
+
+class OwnershipOrControlStatement(Statement):
     def __init__(self, jsonObj):
         self.statementID = getattr(jsonObj, "statementID", "")
         self.statementType = getattr(jsonObj, "statementType", "")
@@ -23,35 +57,44 @@ class OwnershipOrControlStatement:
 
         # TODO replacesStatements
 
-    def getInsertRequest(self):
-        attrs = filter(lambda attr: not attr.startswith('__') and not attr.startswith('get'), dir(self))
-        attr_list = []
-        val_list = []
 
-        for attr in attrs:
-            attr_list.append(attr)
-            val_list.append(getattr(self, attr))
-
-        req = f"INSERT INTO OwnershipOrControlStatement ({','.join(attr_list)}) VALUES ({','.join(val_list)})"
-        print(req)
-
-        return req
-
-
-class EntityStatement:
+class EntityStatement(Statement):
     def __init__(self, jsonObj):
         self.statementID = getattr(jsonObj, "statementID", "")
+        self.statementType = getattr(jsonObj, "statementType", "")
+        self.statementDate = getattr(jsonObj, "statementDate", "")
+        self.entityType = getattr(jsonObj, "entityType", "")
+        self.missingInfoReason = getattr(jsonObj, "missingInfoReason", "")
+        self.foundingDate = getattr(jsonObj, "foundingDate", "")
+        self.dissolutionDate = getattr(jsonObj, "dissolutionDate", "")
+        self.name = getattr(jsonObj, "name", "")
+        # TODO alternateNames
 
-    def getInsertRequest(self):
-        return ""
+        if hasattr(jsonObj, "incorporatedInJurisdiction"):
+            self.incorporatedInJurisdictionCode = jsonObj.incorporatedInJurisdiction.code
+            self.incorporatedInJurisdictionName = jsonObj.incorporatedInJurisdiction.name
+        else:
+            self.incorporatedInJurisdictionCode = ""
+            self.incorporatedInJurisdictionName = ""
+
+        if hasattr(jsonObj, "addresses"):
+            self.addresses = []
+
+            for address in jsonObj.addresses:
+                addrObj = Address(address, self.statementID)
+                self.addresses.append(addrObj)
+
+        #TODO replacesStatements
 
 
-class Address:
-    def __init__(self, jsonObj):
+class Address(Statement):
+    def __init__(self, jsonObj, statementId):
         self.type = getattr(jsonObj, "type", "")
+        self.address = getattr(jsonObj, "address", "")
+        self.postCode = getattr(jsonObj, "postCode", "")
+        self.country = getattr(jsonObj, "country", "")
+        self.statementId = statementId
 
-    def getInsertRequest(self):
-        return ""
 
 def getInsert(jsonObj):
     if not hasattr(jsonObj, "statementType"):
@@ -59,9 +102,10 @@ def getInsert(jsonObj):
 
     if jsonObj.statementType == "entityStatement":
         formattedObj = EntityStatement(jsonObj)
-        formattedObj.getInsertRequest()
+        return formattedObj.getInsertRequest()
     elif jsonObj.statementType == "ownershipOrControlStatement":
         formattedObj = OwnershipOrControlStatement(jsonObj)
-        formattedObj.getInsertRequest()
+        return formattedObj.getInsertRequest()
     else:
         print(f"Skipping non-supported statement: {jsonObj.statementType}")
+        return ""
