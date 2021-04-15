@@ -1,8 +1,5 @@
 # openownership-parser
-Parser to import Open Ownership data in to SAP database
-
-Need to create the following tables
-
+Parser to import [Open Ownership](https://register.openownership.org/) data in to SAP IQ database
 
 ## Pre-requisite
 * install ijson
@@ -50,3 +47,7 @@ pip install ijson
         |interestedPartyDescribedByEntityStatement|string|A reference to a statement describing a registered entity, trust or arrangement that has an ownership or control interest in the subject of this statement. An entityStatement should be used when the direct interests to be described represents known control or ownership by anyone other than a natural person.||
         |replacesStatements|array[string]|If this statement replaces a previous statement or statements, provide the identifier(s) for the previous statement(s) here. Consuming applications are advised to mark the identified statements as no longer active.||
         
+## Run
+```bash
+python parser.py input output
+```
